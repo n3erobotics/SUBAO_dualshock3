@@ -177,8 +177,9 @@ int main()
 		if (button[16]){
 			serialPort.disconnect();
 			close( joy_fd );
-			system("sixad --stop");
-			wait_for_joystick();
+			system("sixad --stop &");
+			//wait_for_joystick();
+			exit(0);
 		}
 		
 		// Detect conflits and process input
