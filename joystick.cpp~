@@ -55,6 +55,12 @@ void apply_values(){
 		value = 0;
 	}
 	
+	sprintf (buffer, "%c%03d\n", aux, value);
+	
+	cout << buffer << endl;
+	
+	serialPort.sendArray(buffer);
+	
 	if (processed_values[LEFT] != 0){
 		aux = 'l';
 		value = processed_values[LEFT];
@@ -105,10 +111,10 @@ void input_processing (int cmd, int input){
 				processed_values[cmd] = input/328;
 				break;
 			case LEFT:	
-				processed_values[cmd] = input/328;
+				processed_values[cmd] = input/547;
 				break;
 			case RIGHT:
-				processed_values[cmd] = input/328;
+				processed_values[cmd] = input/547;
 				break;
 		}
 		
