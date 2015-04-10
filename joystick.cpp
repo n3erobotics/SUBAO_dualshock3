@@ -35,14 +35,16 @@ void my_handler(int signal){
            exit(1);
 }
 
-void send_message(char aux, int value){
+void send_command(char aux, int value){
 	char buffer[5];
-	
 	sprintf (buffer, "%c%03d\n", aux, value);
+	
 	cout << buffer << endl;
+	
 	serialPort.sendArray(buffer);
+	usleep(1000);
 }
-
+/*
 void apply_values(){
 	//Send data to robot
 	char aux;
@@ -63,7 +65,7 @@ void apply_values(){
 		value = 0;
 	}
 	
-	send_message(aux, value);
+	send_command(aux, value);
 	
 	if (processed_values[LEFT] != 0){
 		aux = 'l';
@@ -80,7 +82,7 @@ void apply_values(){
 		value = 0;
 	}
 	
-	send_message(aux, value);
+	send_command(aux, value);
 	
 	cout << "FWD [" << processed_values[FWD] << "] | BCK ["<< processed_values[BCK] << "] | LEFT [" << processed_values[LEFT] << "] | RIGHT [" << processed_values[RIGHT] << "]" << endl;
 }
@@ -105,16 +107,16 @@ void input_processing (int cmd, int input){
 	if (processed_values[cmd] == 0 && input != 0 || processed_values[cmd] != 0 && input == 0 || processed_values[cmd] != 0 && input != 0){
 		switch(cmd){
 			case FWD:
-				processed_values[cmd] = input/300;
+				processed_values[cmd] = input/328;
 				break;
 			case BCK:
-				processed_values[cmd] = input/300;
+				processed_values[cmd] = input/328;
 				break;
 			case LEFT:	
-				processed_values[cmd] = input/547;
+				processed_values[cmd] = input/328;
 				break;
 			case RIGHT:
-				processed_values[cmd] = input/547;
+				processed_values[cmd] = input/328;
 				break;
 		}
 		
@@ -122,7 +124,7 @@ void input_processing (int cmd, int input){
 	}
 	
 	
-}
+}*/
 
 int main()
 {
@@ -130,6 +132,8 @@ int main()
 	joystick.connect();
 	
 	int err=serialPort.connect("//dev//ttyACM0");
+	
+	send_command('n', 0);
 
 	while( 1 ) 	/* infinite loop */
 	{
@@ -140,25 +144,36 @@ int main()
 			serialPort.disconnect();
 			close( joy_fd );
 			system("sixad --stop &");
-			//wait_for_joystick();
 			exit(0);
 		}
 		
-		// Detect conflits and process input
+		joystick.getData();
 		
+		// Detect conflits and process input
 		if (joystick.axis[12] != 0 && joystick.axis[13] != 0){
 			// Rumbleeeeeee
-			send_message('n', 0);
+			send_command('n', 0);
+		}else if (joystick.axis[12] == 0 && joystick.axis[13] != 0){
+			//input_processing(FWD, joystick.axis[13]);
+			cout << "frente" << endl;
+			send_command('f', joystick.axis[12]/547);
 		}else if(joystick.axis[12] != 0 && joystick.axis[13] == 0){
-			send_message('b', joystick.axis[12]/300);
-		}else if(joystick.axis[13] != 0 && joystick.axis[12] == 0){
-			send_message('f', joystick.axis[13]/300);
+			//input_processing(BCK, joystick.axis[12]);
+			send_command('b', joystick.axis[13]/547);
+		}else{
+			send_command('n', 0);
 		}
 		
-		input_processing(DIR, joystick.axis[0]);
-	
+		joystick.getData();
+		
+		if (joystick.axis[0] > 0){
+			send_command('r', joystick.axis[0]);
+		}else if(joystick.axis[0] < 0){
+			send_command('l', abs(joystick.axis[0]));
+		}else{
+			send_command('l', 0);
+		}
 	}
-
 
 	serialPort.disconnect();
 	close( joy_fd );	/* too bad we never get here */
