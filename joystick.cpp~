@@ -35,9 +35,17 @@ void my_handler(int signal){
            exit(1);
 }
 
+void send_message(char aux, int value){
+	char buffer[5];
+	
+	sprintf (buffer, "%c%03d\n", aux, value);
+	cout << buffer << endl;
+	serialPort.sendArray(buffer);
+}
+
 void apply_values(){
 	//Send data to robot
-	char buffer[5], aux;
+	char aux;
 	int value;
   	
 	if (processed_values[FWD] != 0){
@@ -55,11 +63,7 @@ void apply_values(){
 		value = 0;
 	}
 	
-	sprintf (buffer, "%c%03d\n", aux, value);
-	
-	cout << buffer << endl;
-	
-	serialPort.sendArray(buffer);
+	send_message(aux, value);
 	
 	if (processed_values[LEFT] != 0){
 		aux = 'l';
@@ -76,11 +80,7 @@ void apply_values(){
 		value = 0;
 	}
 	
-	sprintf (buffer, "%c%03d\n", aux, value);
-	
-	cout << buffer << endl;
-	
-	serialPort.sendArray(buffer);
+	send_message(aux, value);
 	
 	cout << "FWD [" << processed_values[FWD] << "] | BCK ["<< processed_values[BCK] << "] | LEFT [" << processed_values[LEFT] << "] | RIGHT [" << processed_values[RIGHT] << "]" << endl;
 }
@@ -105,10 +105,10 @@ void input_processing (int cmd, int input){
 	if (processed_values[cmd] == 0 && input != 0 || processed_values[cmd] != 0 && input == 0 || processed_values[cmd] != 0 && input != 0){
 		switch(cmd){
 			case FWD:
-				processed_values[cmd] = input/328;
+				processed_values[cmd] = input/300;
 				break;
 			case BCK:
-				processed_values[cmd] = input/328;
+				processed_values[cmd] = input/300;
 				break;
 			case LEFT:	
 				processed_values[cmd] = input/547;
@@ -148,11 +148,11 @@ int main()
 		
 		if (joystick.axis[12] != 0 && joystick.axis[13] != 0){
 			// Rumbleeeeeee
-			input_processing(BCK, 0);
-			input_processing(FWD, 0);
-		}else{
-			input_processing(BCK, joystick.axis[12]);
-			input_processing(FWD, joystick.axis[13]);
+			send_message('n', 0);
+		}else if(joystick.axis[12] != 0 && joystick.axis[13] == 0){
+			send_message('b', joystick.axis[12]/300);
+		}else if(joystick.axis[13] != 0 && joystick.axis[12] == 0){
+			send_message('f', joystick.axis[13]/300);
 		}
 		
 		input_processing(DIR, joystick.axis[0]);
